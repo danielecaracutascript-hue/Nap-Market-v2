@@ -26,6 +26,13 @@ SELECT jsonb_build_object(
     )
   ),
   'column_privileges', jsonb_build_object(
+    'authenticated_id_insert', has_column_privilege('authenticated','public.profiles','id','INSERT'),
+    'authenticated_handle_insert', has_column_privilege('authenticated','public.profiles','handle','INSERT'),
+    'authenticated_country_insert', has_column_privilege('authenticated','public.profiles','country','INSERT'),
+    'authenticated_seller_type_insert', has_column_privilege('authenticated','public.profiles','seller_type','INSERT'),
+    'authenticated_business_info_insert', has_column_privilege('authenticated','public.profiles','business_info','INSERT'),
+    'authenticated_id_update', has_column_privilege('authenticated','public.profiles','id','UPDATE'),
+    'authenticated_handle_update', has_column_privilege('authenticated','public.profiles','handle','UPDATE'),
     'authenticated_wallet_xpub_update', has_column_privilege('authenticated','public.profiles','wallet_xpub','UPDATE'),
     'authenticated_created_at_update', has_column_privilege('authenticated','public.profiles','created_at','UPDATE'),
     'anon_wallet_xpub_select', has_column_privilege('anon','public.profiles','wallet_xpub','SELECT')

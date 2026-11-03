@@ -1,31 +1,41 @@
-﻿import { Suspense } from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 type Listing = {
   id: string;
+  seller_id: string;
   title: string;
   category: string;
   condition: string;
   price_eur_cents: number;
   package_size: string;
   ship_from_country: string;
-  profiles: { handle: string } | null;
 };
+
+type PublicProfile = { id: string; handle: string };
 
 async function ListingsList() {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("listings")
-    .select("id, title, category, condition, price_eur_cents, package_size, ship_from_country, profiles(handle)")
+    .select("id, seller_id, title, category, condition, price_eur_cents, package_size, ship_from_country")
     .eq("status", "active")
     .order("created_at", { ascending: false });
 
-  const listings = (data ?? []) as unknown as Listing[];
+  const listings = (data ?? []) as Listing[];
+  const sellerIds = [...new Set(listings.map((listing) => listing.seller_id))];
+  const { data: sellers, error: sellersError } = sellerIds.length
+    ? await supabase.from("public_profiles").select("id, handle").in("id", sellerIds)
+    : { data: [], error: null };
+  const handles = new Map(
+    ((sellers ?? []) as PublicProfile[]).map((seller) => [seller.id, seller.handle])
+  );
 
   return (
     <>
       {error && <p className="text-sm">Error: {error.message}</p>}
+      {sellersError && <p className="text-sm">Seller names are temporarily unavailable.</p>}
       {listings.length === 0 && !error && <p className="text-sm">No listings yet.</p>}
       <ul className="space-y-3">
         {listings.map((l) => (
@@ -36,7 +46,7 @@ async function ListingsList() {
                 <p className="text-sm opacity-70">
                   {l.category} · {l.condition.replace("_", " ")} · {l.package_size} package · ships from {l.ship_from_country}
                 </p>
-                <p className="text-sm opacity-70">Seller: {l.profiles?.handle ?? "unknown"}</p>
+                <p className="text-sm opacity-70">Seller: {handles.get(l.seller_id) ?? "unknown"}</p>
               </div>
               <p className="font-semibold">{(l.price_eur_cents / 100).toFixed(2)} EUR</p>
             </div>
@@ -63,7 +73,3 @@ export default function ListingsPage() {
     </div>
   );
 }
-
-
-
-
